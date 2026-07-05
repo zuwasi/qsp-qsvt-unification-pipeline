@@ -1,0 +1,46 @@
+=== QSP / QSVT Proof Audit ===
+Paper: Grand Unification of Quantum Algorithms (Martyn, Rossi, Tan, Chuang 2021)
+
+-- A. Operator conventions --
+PASS: W(a)=e^{i arccos(a) X} matches MatrixExp
+PASS: S(phi)=e^{i phi Z} matches MatrixExp
+-- B. QSP -> Chebyshev symbolic identities --
+PASS: d=1: zero-phase P = T_d
+PASS: d=1: zero-phase Q = U_{d-1}
+PASS: d=1: Pell identity T_d^2+(1-a^2)U_{d-1}^2=1
+PASS: d=2: zero-phase P = T_d
+PASS: d=2: zero-phase Q = U_{d-1}
+PASS: d=2: Pell identity T_d^2+(1-a^2)U_{d-1}^2=1
+PASS: d=3: zero-phase P = T_d
+PASS: d=3: zero-phase Q = U_{d-1}
+PASS: d=3: Pell identity T_d^2+(1-a^2)U_{d-1}^2=1
+PASS: d=5: zero-phase P = T_d
+PASS: d=5: zero-phase Q = U_{d-1}
+PASS: d=5: Pell identity T_d^2+(1-a^2)U_{d-1}^2=1
+PASS: d=8: zero-phase P = T_d
+PASS: d=8: zero-phase Q = U_{d-1}
+PASS: d=8: Pell identity T_d^2+(1-a^2)U_{d-1}^2=1
+-- C. QSP theorem: value, unitarity, parity --
+PASS: zero-phase Re P_d(a) = T_d(a) numerically (d<=8)
+PASS: QSP unitarity |P|^2+(1-a^2)|Q|^2=1 (random symmetric phases)
+PASS: parity: T_d(-a) = (-1)^d T_d(a) via zero-phase QSP
+-- D. Jacobi-Anger expansions --
+PASS: Jacobi-Anger cos coefficient c_{2k} = 2(-1)^k J_{2k}(t)
+PASS: cos(t a) series error < 1e-6 on [-1,1]
+PASS: sin(t a) series error < 1e-6 on [-1,1]
+-- E. Exported artifact validation --
+PASS: exported demo1 phases reproduce T_5 (max err < 1e-10)
+PASS: exported demo1 checkpoint unitaries match recomputation
+PASS: exported cos phases hit target at eigenvalues (< 1e-5)
+PASS: exported sin phases hit target at eigenvalues (< 1e-5)
+PASS: cos phases symmetric
+PASS: sin phases symmetric
+PASS: e^{-iHt} reconstruction max error < 1e-4
+PASS: e^{-iHt} overlap > 0.9999
+PASS: exported H Hermitian
+PASS: exported H spectral norm <= 1
+-- F. Cross-tool (Qiskit) --
+PASS: Qiskit vs Wolfram unitary agreement < 1e-9
+PASS: Qiskit-reconstructed e^{-iHt} overlap > 0.9999
+
+=== SUMMARY: 35 passed, 0 failed, 0 warnings ===

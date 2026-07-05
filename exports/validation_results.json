@@ -1,0 +1,11 @@
+{
+	"chebyshev_symbolic_all_pass":true,
+	"zero_phase_chebyshev_max_error":7.771561172376096e-16,
+	"qsp_unitarity_max_error":8.881784197001252e-16,
+	"jacobi_anger_cos_error":2.151856470788971e-11,
+	"jacobi_anger_sin_error":1.4216128274568973e-12,
+	"phase_gen_cos_max_error":2.7875298302948437e-7,
+	"phase_gen_sin_max_error":6.599418700403703e-8,
+	"hamiltonian_sim_max_error":1.3426129935073428e-7,
+	"hamiltonian_sim_overlap":0.9999999393206793
+}

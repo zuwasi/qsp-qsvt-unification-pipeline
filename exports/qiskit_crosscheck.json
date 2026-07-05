@@ -1,0 +1,62 @@
+{
+  "cross_check": {
+    "checkpoints": 19,
+    "max_unitary_error": 6.123233995736766e-16,
+    "max_P_error": 3.061616997868383e-16,
+    "pass": true
+  },
+  "demo1": {
+    "a": 0.6,
+    "degree": 5,
+    "P_real": -0.07583999999999974,
+    "P_imag": 0.0,
+    "chebyshev_T_d": -0.07583999999999991,
+    "abs_err_vs_Td": 1.6653345369377348e-16,
+    "prob0_exact": 0.0057517055999999605,
+    "aer_freq0": 0.00635,
+    "shots": 20000,
+    "qasm2": "demo1_chebyshev_d5_a0.6.qasm",
+    "qasm3": "demo1_chebyshev_d5_a0.6.qasm3",
+    "diagram": "demo1_chebyshev_d5_a0.6_circuit.png"
+  },
+  "demo2": {
+    "t": 2.0,
+    "eta": 0.1,
+    "eigenvalues": [
+      -0.7059919656624001,
+      -0.3106591369755003,
+      0.16665110263790295,
+      0.8499999999999999
+    ],
+    "cos_response_qiskit": [
+      0.14233100000289467,
+      0.7318003979228512,
+      0.8504704027564953,
+      -0.11595996879607817
+    ],
+    "cos_target": [
+      0.142331093050068,
+      0.7318006075529491,
+      0.8504704177130428,
+      -0.11596004486597197
+    ],
+    "sin_response_qiskit": [
+      -0.8886742036921176,
+      -0.5238968074267526,
+      0.2944487579092517,
+      0.8924983329587383
+    ],
+    "sin_target": [
+      -0.8886742147441732,
+      -0.523896813108397,
+      0.2944487537671073,
+      0.8924983294072218
+    ],
+    "evolution_max_error": 1.342612993593656e-07,
+    "evolution_overlap": 0.9999999393206793,
+    "cos_qasm2": "demo2_cos_d12_eig0.8500.qasm",
+    "sin_qasm2": "demo2_sin_d13_eig0.8500.qasm",
+    "cos_diagram": "demo2_cos_d12_eig0.8500_circuit.png",
+    "sin_diagram": "demo2_sin_d13_eig0.8500_circuit.png"
+  }
+}

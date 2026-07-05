@@ -1,0 +1,162 @@
+{
+  "demo1_chebyshev_d5": {
+    "num_qubits": 1,
+    "native_ops": {
+      "rz": 6,
+      "rx": 5
+    },
+    "native_depth": 11,
+    "native_size": 11,
+    "u_basis_gates": 11,
+    "u_basis_depth": 11,
+    "ibm_basis_ops": {
+      "rz": 3,
+      "sx": 2
+    },
+    "ibm_basis_depth": 5,
+    "opt3_u_gates": 1,
+    "opt3_depth": 1
+  },
+  "demo2_cos_d12": {
+    "num_qubits": 1,
+    "native_ops": {
+      "rz": 13,
+      "rx": 12
+    },
+    "native_depth": 25,
+    "native_size": 25,
+    "u_basis_gates": 25,
+    "u_basis_depth": 25,
+    "ibm_basis_ops": {
+      "rz": 3,
+      "sx": 2
+    },
+    "ibm_basis_depth": 5,
+    "opt3_u_gates": 1,
+    "opt3_depth": 1
+  },
+  "demo2_sin_d13": {
+    "num_qubits": 1,
+    "native_ops": {
+      "rz": 14,
+      "rx": 13
+    },
+    "native_depth": 27,
+    "native_size": 27,
+    "u_basis_gates": 27,
+    "u_basis_depth": 27,
+    "ibm_basis_ops": {
+      "rz": 3,
+      "sx": 2
+    },
+    "ibm_basis_depth": 5,
+    "opt3_u_gates": 1,
+    "opt3_depth": 1
+  },
+  "scaling_table": [
+    {
+      "degree": 1,
+      "signal_calls": 1,
+      "rz": 2,
+      "rx": 1,
+      "total_rotations": 3,
+      "depth": 3
+    },
+    {
+      "degree": 2,
+      "signal_calls": 2,
+      "rz": 3,
+      "rx": 2,
+      "total_rotations": 5,
+      "depth": 5
+    },
+    {
+      "degree": 3,
+      "signal_calls": 3,
+      "rz": 4,
+      "rx": 3,
+      "total_rotations": 7,
+      "depth": 7
+    },
+    {
+      "degree": 4,
+      "signal_calls": 4,
+      "rz": 5,
+      "rx": 4,
+      "total_rotations": 9,
+      "depth": 9
+    },
+    {
+      "degree": 5,
+      "signal_calls": 5,
+      "rz": 6,
+      "rx": 5,
+      "total_rotations": 11,
+      "depth": 11
+    },
+    {
+      "degree": 6,
+      "signal_calls": 6,
+      "rz": 7,
+      "rx": 6,
+      "total_rotations": 13,
+      "depth": 13
+    },
+    {
+      "degree": 7,
+      "signal_calls": 7,
+      "rz": 8,
+      "rx": 7,
+      "total_rotations": 15,
+      "depth": 15
+    },
+    {
+      "degree": 8,
+      "signal_calls": 8,
+      "rz": 9,
+      "rx": 8,
+      "total_rotations": 17,
+      "depth": 17
+    },
+    {
+      "degree": 9,
+      "signal_calls": 9,
+      "rz": 10,
+      "rx": 9,
+      "total_rotations": 19,
+      "depth": 19
+    },
+    {
+      "degree": 10,
+      "signal_calls": 10,
+      "rz": 11,
+      "rx": 10,
+      "total_rotations": 21,
+      "depth": 21
+    },
+    {
+      "degree": 11,
+      "signal_calls": 11,
+      "rz": 12,
+      "rx": 11,
+      "total_rotations": 23,
+      "depth": 23
+    },
+    {
+      "degree": 12,
+      "signal_calls": 12,
+      "rz": 13,
+      "rx": 12,
+      "total_rotations": 25,
+      "depth": 25
+    },
+    {
+      "degree": 13,
+      "signal_calls": 13,
+      "rz": 14,
+      "rx": 13,
+      "total_rotations": 27,
+      "depth": 27
+    }
+  ]
+}

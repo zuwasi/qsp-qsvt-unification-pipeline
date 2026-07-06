@@ -3,10 +3,11 @@
    make_notebook.wls  --  generate the interactive companion notebook
    QSPUnification.nb from the QSPUnification.wl package.
 
-   Requires the Wolfram notebook front end (desktop Mathematica / Wolfram).
-   Results are computed in-kernel and typeset with ToBoxes (so plots embed as
-   real GraphicsBox), then paired with their input cells and saved as a proper
-   .nb next to this script.
+   Runs headlessly in a plain Wolfram kernel (no notebook front end), so it can
+   never block on front-end activation or teardown. Results are computed
+   in-kernel and typeset with ToBoxes (so plots embed as real GraphicsBox),
+   paired with their input cells, and written directly to a proper .nb next to
+   this script.
 
    Run:  wolframscript -file make_notebook.wls
    ============================================================================ *)
@@ -111,12 +112,8 @@ Low, I. L. Chuang, Optimal Hamiltonian Simulation by Quantum Signal \
 Processing, Phys. Rev. Lett. 118, 010501 (2017)."]
 };
 
-Print["Saving notebook (front end) ..."];
-UsingFrontEnd[
-  nb = CreateDocument[cells, Visible -> False, WindowTitle -> "QSP / QSVT Unification"];
-  NotebookSave[nb, nbPath];
-  NotebookClose[nb];
-];
+Print["Writing notebook (headless kernel, no front end) ..."];
+Export[nbPath, Notebook[cells, WindowTitle -> "QSP / QSVT Unification"], "NB"];
 
 If[FileExistsQ[nbPath],
   Print["Wrote ", nbPath, "  (", FileByteCount[nbPath], " bytes)"],

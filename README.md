@@ -63,6 +63,8 @@ hand-off to Classiq synthesis as the next step.
 ```
 qsp_pipeline/
 ├── README.md
+├── QSPUnification.nb        # interactive companion notebook (evaluated, with plots)
+├── make_notebook.wls        # regenerates QSPUnification.nb from the package
 ├── build_project.wls        # master Wolfram build -> exports/
 ├── proof_audit.wls          # 35 paper-specific checks -> audit_report.txt
 ├── qiskit_pipeline.py       # Qiskit stage: circuits, QASM, sim, resources
@@ -100,6 +102,17 @@ Run order matters: `build_project.wls` writes `exports/qsp_data.json` (consumed
 by the other two), and `qiskit_pipeline.py` writes `exports/qiskit_crosscheck.json`
 (audited in step 3). The audit still runs standalone — it just emits warnings for
 any artifact not yet generated.
+
+### Interactive notebook
+
+`QSPUnification.nb` is an evaluated companion notebook (symbolic derivation,
+numerical checks, and plots) for the Wolfram desktop front end. Open it and
+choose *Evaluation ▸ Evaluate Notebook* to reproduce every result. To rebuild
+it from the package (requires the notebook front end):
+
+```powershell
+wolframscript -file make_notebook.wls
+```
 
 ## Outputs (`exports/`)
 

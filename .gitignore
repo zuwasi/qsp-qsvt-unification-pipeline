@@ -19,3 +19,6 @@ Thumbs.db
 
 # Source paper PDF (copyrighted — not redistributed)
 *.pdf
+
+# LinkedIn / social post artifacts (not part of the project)
+linkedin_*

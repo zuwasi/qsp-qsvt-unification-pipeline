@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Grand Unification of Quantum Algorithms — QSP/QSVT in Wolfram Mathematica → OpenQASM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg0:#05060f; --bg1:#0a0e27; --bg2:#0d1140;
+    --cyan:#22d3ee; --cyan2:#00e5ff;
+    --violet:#a855f7; --violet2:#b14aed;
+    --blue:#4f8cff; --pink:#f472b6; --amber:#fbbf24;
+    --text:#e8eef7; --muted:#9db0c9; --dim:#6b7d99;
+    --panel:rgba(255,255,255,.045); --panel2:rgba(255,255,255,.07);
+    --border:rgba(120,190,255,.18); --border2:rgba(168,85,247,.28);
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    background:var(--bg0); color:var(--text);
+    -webkit-font-smoothing:antialiased; position:relative;
+  }
+  /* ---------- animated quantum background ---------- */
+  .bg-field{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+  .bg-field::before{
+    content:"";position:absolute;inset:-20%;
+    background:
+      radial-gradient(circle at 18% 22%, rgba(34,211,238,.16), transparent 42%),
+      radial-gradient(circle at 82% 20%, rgba(168,85,247,.16), transparent 45%),
+      radial-gradient(circle at 70% 82%, rgba(79,140,255,.14), transparent 45%),
+      radial-gradient(circle at 25% 80%, rgba(244,114,182,.10), transparent 45%),
+      linear-gradient(160deg,var(--bg1),var(--bg0) 60%,var(--bg2));
+    animation:drift 26s ease-in-out infinite alternate;
+  }
+  @keyframes drift{0%{transform:translate3d(0,0,0) scale(1)}100%{transform:translate3d(-3%,-2%,0) scale(1.08)}}
+  .grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.35;
+    background-image:linear-gradient(rgba(120,190,255,.06) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(120,190,255,.06) 1px,transparent 1px);
+    background-size:44px 44px;mask-image:radial-gradient(circle at 50% 50%,#000 55%,transparent 100%)}
+  .qdot{position:fixed;border-radius:50%;z-index:0;pointer-events:none;filter:blur(.3px);
+    box-shadow:0 0 10px 2px currentColor;animation:float 14s ease-in-out infinite}
+  @keyframes float{0%,100%{transform:translateY(0) translateX(0);opacity:.5}
+    50%{transform:translateY(-26px) translateX(12px);opacity:1}}
+
+  /* ---------- deck / slides ---------- */
+  .deck{position:relative;z-index:2;display:flex;height:100vh;width:100vw;
+    transition:transform .62s cubic-bezier(.76,0,.24,1);will-change:transform}
+  .slide{flex:0 0 100vw;width:100vw;max-width:100vw;height:100vh;display:flex;align-items:center;justify-content:center;
+    padding:clamp(20px,4.5vw,72px);position:relative;overflow:hidden}
+  .wrap{width:100%;max-width:1180px;min-width:0;max-height:100%;overflow-y:auto;overflow-x:hidden;
+    scrollbar-width:thin;scrollbar-color:rgba(120,190,255,.4) transparent}
+  .wrap::-webkit-scrollbar{width:7px}
+  .wrap::-webkit-scrollbar-thumb{background:rgba(120,190,255,.35);border-radius:8px}
+
+  .eyebrow{font-family:var(--mono);font-size:clamp(.62rem,1.35vw,.82rem);letter-spacing:.32em;
+    text-transform:uppercase;color:var(--cyan);margin-bottom:18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .eyebrow::before{content:"";width:26px;height:2px;background:linear-gradient(90deg,var(--cyan),transparent)}
+  h1{font-size:clamp(2rem,6.2vw,4.4rem);font-weight:900;line-height:1.02;letter-spacing:-.02em}
+  h2{font-size:clamp(1.5rem,3.9vw,2.7rem);font-weight:800;line-height:1.08;letter-spacing:-.015em;margin-bottom:8px}
+  h3{font-size:clamp(1rem,2vw,1.32rem);font-weight:700;margin-bottom:8px}
+  .grad{background:linear-gradient(100deg,var(--cyan2) 0%,var(--blue) 45%,var(--violet2) 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:clamp(1rem,2.15vw,1.4rem);color:var(--muted);line-height:1.55;max-width:60ch;margin-top:16px;font-weight:300}
+  p{line-height:1.6;color:var(--muted)}
+  strong{color:var(--text);font-weight:600}
+  .accent{color:var(--cyan)} .vio{color:var(--violet)} .pink{color:var(--pink)} .amb{color:var(--amber)}
+
+  .chips{display:flex;gap:10px;flex-wrap:wrap;margin-top:30px}
+  .chip{font-family:var(--mono);font-size:.72rem;padding:8px 14px;border:1px solid var(--border);
+    border-radius:999px;background:var(--panel);color:var(--muted);backdrop-filter:blur(6px)}
+  .chip b{color:var(--cyan);font-weight:600}
+
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:18px;
+    padding:clamp(16px,2.4vw,26px);backdrop-filter:blur(8px)}
+  .panel.vio{border-color:var(--border2)}
+  .grid{display:grid;gap:18px}
+  .grid>*{min-width:0}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)}
+  .g-img{grid-template-columns:1.05fr .95fr;align-items:center}
+  @media(max-width:860px){.g2,.g3,.g-img{grid-template-columns:1fr}}
+
+  .imgcard{background:#f6f9fc;border:1px solid var(--border);border-radius:16px;padding:12px;
+    box-shadow:0 20px 50px -20px rgba(34,211,238,.35),0 0 0 1px rgba(168,85,247,.10)}
+  .imgcard img{width:100%;height:auto;display:block;border-radius:8px}
+  .cap{font-family:var(--mono);font-size:.72rem;color:var(--dim);margin-top:12px;line-height:1.5}
+
+  /* ---------- tool logos / themes ---------- */
+  .logostrip{display:flex;align-items:center;gap:clamp(14px,2.8vw,32px);flex-wrap:wrap}
+  .logostrip .ml{height:clamp(34px,5vw,48px);width:auto;flex:none;filter:drop-shadow(0 6px 20px rgba(233,30,10,.45))}
+  .logostrip .al{height:clamp(22px,3.4vw,30px);width:auto;flex:none;filter:drop-shadow(0 4px 16px rgba(120,190,255,.4))}
+  .logostrip .dot{color:var(--dim);font-size:1.5rem;opacity:.55;line-height:1}
+  .logostrip .qmark{font-family:var(--mono);font-weight:700;font-size:clamp(1rem,2.4vw,1.5rem);letter-spacing:.01em;
+    background:linear-gradient(100deg,var(--cyan2),var(--violet2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .logostrip .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+  .toolhead{display:flex;align-items:center;gap:14px;margin-bottom:8px}
+  .toolhead .ml{height:38px;width:auto;flex:none;filter:drop-shadow(0 5px 16px rgba(233,30,10,.45))}
+  .toolhead .al{height:24px;width:auto;flex:none;filter:drop-shadow(0 4px 14px rgba(120,190,255,.4))}
+  .toolhead h3{margin:0}
+  .qasm-banner{border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;
+    box-shadow:0 24px 60px -30px rgba(34,211,238,.55),0 0 0 1px rgba(168,85,247,.10)}
+  .qasm-banner img{width:100%;height:clamp(108px,17vh,168px);object-fit:cover;object-position:center;display:block}
+  .qasm-banner .bl{position:absolute;left:14px;bottom:9px;font-family:var(--mono);font-size:.6rem;
+    letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.72);text-shadow:0 1px 6px rgba(0,0,0,.7)}
+  .logostrip a,.toolhead a{display:inline-flex;align-items:center;text-decoration:none;transition:transform .2s ease,opacity .2s ease}
+  .logostrip a:hover,.toolhead a:hover{opacity:.82;transform:translateY(-1px)}
+  .qasm-banner a{display:block}
+
+  /* ---------- ESL branding / credits ---------- */
+  .brand-chip{position:fixed;top:14px;left:16px;z-index:40;display:flex;align-items:center;gap:9px;
+    background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.5);border-radius:999px;
+    padding:5px 13px 5px 8px;box-shadow:0 10px 30px -12px rgba(0,0,0,.6);text-decoration:none}
+  .brand-chip img{height:20px;display:block}
+  .brand-chip span{color:#1b2233;font-weight:800;font-size:11.5px;letter-spacing:.4px}
+  .divider{height:1px;width:min(560px,86%);background:linear-gradient(90deg,transparent,var(--border),transparent);margin:12px 0 0}
+  .credits{display:grid;grid-template-columns:1fr 1fr;gap:14px;width:100%;max-width:760px;margin-top:10px}
+  .credit{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:clamp(11px,1.4vw,15px);min-width:0}
+  .credit .lbl{font-family:var(--mono);font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--dim)}
+  .credit h3{font-size:.98rem;margin:3px 0 2px}
+  .credit p{font-size:.84rem;color:var(--muted);margin:0 0 2px}
+  .credit a{color:var(--cyan);text-decoration:none;font-size:.84rem;font-family:var(--mono);word-break:break-word}
+  .credit a:hover{text-decoration:underline}
+  .logo-card{background:#fff;border-radius:12px;padding:8px 12px;display:inline-block;margin-bottom:7px;
+    box-shadow:0 16px 44px -18px rgba(0,0,0,.7)}
+  .logo-card img{height:clamp(26px,3.4vw,34px);display:block}
+  .credit.author-card{display:flex;align-items:center;gap:13px}
+  .avatar{width:54px;height:54px;border-radius:50%;object-fit:cover;border:2px solid var(--cyan);
+    box-shadow:0 8px 24px rgba(0,0,0,.4);flex:none}
+  @media(max-width:640px){.credits{grid-template-columns:1fr}}
+  /* compact overrides scoped to the cover so credits fit without scrolling */
+  .slide.cover{padding-top:26px;padding-bottom:26px}
+  .cover .sec-no{margin-bottom:4px}
+  .cover .eyebrow{margin-bottom:12px}
+  .cover h1{font-size:clamp(1.8rem,4.7vw,3.2rem);line-height:1.05}
+  .cover .lead{font-size:clamp(.92rem,1.75vw,1.12rem);margin-top:10px}
+  .cover .chips{margin-top:14px}
+  @media(max-width:480px){.brand-chip span{display:none}}
+
+  /* ---------- closing / thank-you slide ---------- */
+  .close{text-align:center}
+  .close .wrap{display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.9vh,20px)}
+  .close h1{font-size:clamp(2.2rem,6.4vw,4.6rem);line-height:1.03}
+  .close .lead{max-width:800px;margin:0}
+  .repo-link{font-family:var(--mono);font-size:clamp(.82rem,1.7vw,1.02rem);color:var(--cyan);text-decoration:none;
+    border:1px solid var(--border);background:var(--panel);border-radius:999px;padding:9px 18px;word-break:break-all;
+    transition:transform .2s ease,border-color .2s ease}
+  .repo-link:hover{border-color:var(--cyan);transform:translateY(-1px)}
+
+  code,.mono{font-family:var(--mono)}
+  .code{font-family:var(--mono);font-size:clamp(.72rem,1.35vw,.92rem);line-height:1.7;
+    background:rgba(3,6,18,.7);border:1px solid var(--border);border-radius:14px;
+    padding:18px 20px;color:#cfe6ff;white-space:pre;overflow-x:auto;
+    box-shadow:inset 0 0 40px rgba(34,211,238,.06)}
+  .code .k{color:var(--violet)} .code .n{color:var(--amber)} .code .c{color:var(--dim)} .code .s{color:var(--cyan)}
+  .formula{font-family:var(--mono);font-size:clamp(.82rem,1.7vw,1.08rem);color:#dbeafe;
+    background:rgba(3,6,18,.55);border-left:3px solid var(--cyan);border-radius:0 12px 12px 0;
+    padding:14px 18px;margin:12px 0;line-height:1.9;overflow-x:auto}
+
+  ul.feat{list-style:none;display:grid;gap:12px;margin-top:6px}
+  ul.feat li{padding-left:30px;position:relative;color:var(--muted);line-height:1.5}
+  ul.feat li::before{content:"◇";position:absolute;left:0;top:0;color:var(--cyan);font-size:1rem}
+
+  table{width:100%;border-collapse:collapse;font-size:clamp(.72rem,1.4vw,.94rem)}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid rgba(120,190,255,.12)}
+  th{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--cyan);font-weight:600}
+  td{color:var(--muted)} td b,td strong{color:var(--text)}
+  .twrap{overflow-x:auto;border-radius:14px}
+  .ok{color:#34d399;font-weight:600}
+  .num{font-family:var(--mono);color:var(--amber)}
+
+  /* flow diagram */
+  .flow{display:flex;flex-direction:column;gap:12px;margin-top:8px}
+  .frow{display:flex;gap:12px;flex-wrap:wrap;align-items:stretch}
+  .node{flex:1;min-width:140px;background:var(--panel);border:1px solid var(--border);border-radius:14px;
+    padding:14px 16px;position:relative}
+  .node .t{font-weight:700;font-size:.95rem;color:var(--text)}
+  .node .d{font-family:var(--mono);font-size:.68rem;color:var(--dim);margin-top:4px}
+  .node.hl{border-color:var(--cyan);box-shadow:0 0 0 1px rgba(34,211,238,.25),0 12px 30px -18px rgba(34,211,238,.6)}
+  .node.vio{border-color:var(--border2)}
+  .arrow{align-self:center;color:var(--cyan);font-size:1.3rem;font-family:var(--mono)}
+
+  .stat{display:flex;flex-direction:column;gap:2px}
+  .stat .v{font-family:var(--mono);font-weight:700;font-size:clamp(1.2rem,3vw,2rem);
+    background:linear-gradient(100deg,var(--cyan2),var(--violet2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .stat .l{font-size:.74rem;color:var(--dim);font-family:var(--mono)}
+
+  .eco{display:flex;gap:14px;align-items:flex-start}
+  .eco .ic{font-size:1.7rem;line-height:1}
+  .vendors{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .vendors span{font-family:var(--mono);font-size:.68rem;padding:5px 10px;border:1px solid var(--border);
+    border-radius:8px;color:var(--muted);background:rgba(3,6,18,.4)}
+
+  /* Bloch sphere on title */
+  .bloch{position:absolute;right:6vw;top:50%;transform:translateY(-50%);width:min(34vw,380px);height:min(34vw,380px);
+    z-index:1;pointer-events:none;opacity:.9}
+  @media(max-width:960px){.bloch{display:none}}
+  .bloch .ring{position:absolute;inset:0;border:1px solid rgba(34,211,238,.35);border-radius:50%}
+  .bloch .r2{transform:rotateX(74deg);border-color:rgba(168,85,247,.4)}
+  .bloch .r3{transform:rotateY(74deg);border-color:rgba(79,140,255,.4)}
+  .bloch .core{position:absolute;inset:0;margin:auto;width:16px;height:16px;border-radius:50%;
+    background:radial-gradient(circle,#fff,var(--cyan));box-shadow:0 0 30px 8px rgba(34,211,238,.7);animation:pulse 3s ease-in-out infinite}
+  .bloch .orb{position:absolute;top:50%;left:50%;width:12px;height:12px;margin:-6px;border-radius:50%;
+    background:var(--violet);box-shadow:0 0 16px 4px var(--violet);animation:orbit 7s linear infinite}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.75}}
+  @keyframes orbit{from{transform:rotate(0) translateX(min(15vw,168px)) rotate(0)}to{transform:rotate(360deg) translateX(min(15vw,168px)) rotate(-360deg)}}
+  .spin{animation:spin 30s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+
+  /* ---------- nav / chrome ---------- */
+  .nav{position:fixed;top:50%;transform:translateY(-50%);z-index:30;width:52px;height:52px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;color:var(--text);
+    background:rgba(10,14,39,.55);border:1px solid var(--border);backdrop-filter:blur(10px);
+    transition:.25s;user-select:none}
+  .nav:hover{background:rgba(34,211,238,.18);border-color:var(--cyan);box-shadow:0 0 24px rgba(34,211,238,.4)}
+  .nav.prev{left:20px}.nav.next{right:20px}
+  .nav.hide{opacity:0;pointer-events:none;transform:translateY(-50%) scale(.7)}
+  .progress{position:fixed;left:0;bottom:0;height:4px;z-index:30;width:100%;background:rgba(255,255,255,.06)}
+  .progress .fill{height:100%;width:0;background:linear-gradient(90deg,var(--cyan2),var(--blue),var(--violet2));
+    box-shadow:0 0 14px rgba(34,211,238,.6);transition:width .5s ease}
+  .counter{position:fixed;right:18px;bottom:16px;z-index:30;font-family:var(--mono);font-size:.76rem;
+    color:var(--muted);background:rgba(10,14,39,.55);border:1px solid var(--border);border-radius:999px;
+    padding:6px 14px;backdrop-filter:blur(8px)}
+  .counter b{color:var(--cyan)}
+  .hint{position:absolute;bottom:42px;left:50%;transform:translateX(-50%);z-index:20;font-family:var(--mono);
+    font-size:.8rem;color:var(--muted);display:flex;gap:10px;align-items:center;animation:sway 2.4s ease-in-out infinite}
+  @keyframes sway{0%,100%{opacity:.45;transform:translateX(-50%) translateX(-6px)}50%{opacity:1;transform:translateX(-50%) translateX(6px)}}
+  .hint.gone{display:none}
+  .brandline{position:fixed;left:20px;bottom:14px;z-index:30;font-family:var(--mono);font-size:.68rem;color:var(--dim)}
+  .sec-no{font-family:var(--mono);font-size:.72rem;color:var(--violet);letter-spacing:.2em;margin-bottom:6px}
+</style>
+</head>
+<body>
+<div class="bg-field"></div>
+<div class="grid-lines"></div>
+<a class="brand-chip" href="https://eswlab.com/" target="_blank" rel="noopener"><img src="assets/esl_logo.png" alt="ESL" /><span>Engineering Software Lab</span></a>
+<div class="qdot" style="left:12%;top:24%;width:8px;height:8px;color:#22d3ee;animation-delay:0s"></div>
+<div class="qdot" style="left:86%;top:30%;width:6px;height:6px;color:#a855f7;animation-delay:2s"></div>
+<div class="qdot" style="left:72%;top:70%;width:10px;height:10px;color:#4f8cff;animation-delay:4s"></div>
+<div class="qdot" style="left:22%;top:76%;width:7px;height:7px;color:#f472b6;animation-delay:6s"></div>
+<div class="qdot" style="left:50%;top:14%;width:5px;height:5px;color:#22d3ee;animation-delay:3s"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 TITLE -->
+  <section class="slide cover">
+    <div class="bloch spin">
+      <div class="ring"></div><div class="ring r2"></div><div class="ring r3"></div>
+      <div class="core"></div><div class="orb"></div>
+    </div>
+    <div class="wrap">
+      <div class="sec-no">01 — OVERVIEW</div>
+      <div class="eyebrow">Wolfram Mathematica · Amp · Wolfram Quantum Framework · Qiskit</div>
+      <h1>Grand Unification of<br><span class="grad">Quantum Algorithms</span></h1>
+      <p class="lead">A research paper turned into <strong>verified, runnable quantum circuits</strong> — an end‑to‑end pipeline that derives Quantum Signal Processing symbolically, checks every identity to machine precision, and exports portable <strong>OpenQASM</strong>.</p>
+      <div class="chips">
+        <div class="chip"><b>QSP → Chebyshev → Hamiltonian simulation</b></div>
+        <div class="chip">Wolfram Quantum Framework · <b>SecondQuantization</b></div>
+        <div class="chip">Wolfram ↔ Qiskit agreement <b>6×10⁻¹⁶</b></div>
+      </div>
+      <div class="logostrip" style="margin-top:16px" aria-label="Toolchain">
+        <span class="lbl">Powered&nbsp;by</span>
+        <a href="https://www.wolfram.com/mathematica/" target="_blank" rel="noopener" title="Wolfram Mathematica"><img class="ml" src="assets/mathematica-star.png" alt="Wolfram Mathematica" /></a>
+        <span class="dot">·</span>
+        <a href="https://ampcode.com/" target="_blank" rel="noopener" title="Amp — Mathematica skill"><img class="al" src="assets/amp-logo.svg" alt="Amp" /></a>
+        <span class="dot">·</span>
+        <a class="qmark" href="https://openqasm.com/" target="_blank" rel="noopener" title="OpenQASM">OpenQASM</a>
+      </div>
+      <div class="divider"></div>
+      <div class="credits">
+        <div class="credit">
+          <div class="lbl">Prepared by</div>
+          <div class="logo-card"><img src="assets/esl_logo.png" alt="ESL — Engineering Software Lab" /></div>
+          <h3>ESL — Engineering Software Lab</h3>
+          <p>Software Engineering Consultants</p>
+          <a href="https://eswlab.com/contact-us/" target="_blank" rel="noopener">eswlab.com/contact-us →</a>
+        </div>
+        <div class="credit author-card">
+          <img class="avatar" src="assets/daniel.jpg" alt="Daniel Liezrowice" />
+          <div style="min-width:0">
+            <div class="lbl">Author</div>
+            <h3>Daniel Liezrowice</h3>
+            <a href="https://www.linkedin.com/in/liezrowice/" target="_blank" rel="noopener">LinkedIn →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="hint" id="hint">← &nbsp;Swipe / arrow keys to navigate&nbsp; →</div>
+  </section>
+
+  <!-- 2 THE PAPER -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">02 — THE SUBJECT</div>
+      <h2>One primitive, <span class="grad">most known quantum algorithms</span></h2>
+      <p class="lead">Martyn, Rossi, Tan &amp; Chuang, <em>Grand Unification of Quantum Algorithms</em> (PRX Quantum 2, 040203, 2021), building on Low &amp; Chuang (PRL 118, 010501, 2017).</p>
+      <div class="grid g2" style="margin-top:22px">
+        <div class="panel">
+          <h3 class="accent">The core insight</h3>
+          <p>Nearly every flagship quantum algorithm is a <strong>polynomial transformation of a block‑encoded operator</strong>, selected by a sequence of <strong>phase angles</strong>. That single object is <span class="vio">Quantum Signal Processing (QSP)</span> and its lift to matrices, <span class="vio">QSVT</span>.</p>
+          <ul class="feat" style="margin-top:14px">
+            <li>Amplitude amplification / Grover search</li>
+            <li>Hamiltonian simulation&nbsp; e<sup>−iHt</sup></li>
+            <li>Quantum linear systems&nbsp; A<sup>−1</sup></li>
+            <li>Phase / eigenvalue estimation</li>
+            <li>General matrix functions&nbsp; f(A)</li>
+          </ul>
+        </div>
+        <div class="panel vio">
+          <h3 class="pink">Why it matters commercially</h3>
+          <p>Unification moves the hard problem from <em>physics</em> to <em>engineering</em>:</p>
+          <ul class="feat" style="margin-top:14px">
+            <li><strong>One compiler target</strong> serves many algorithms — R&amp;D is amortized.</li>
+            <li>The bottleneck becomes <strong>“find the phase angles”</strong> — a numerical, productizable task.</li>
+            <li>QSVT gives <strong>near‑optimal resource scaling</strong> — it defines what a machine can actually reach.</li>
+          </ul>
+          <p style="margin-top:14px;font-size:.9rem">The practical needs: <span class="accent">derive → verify → generate phases → estimate cost → run anywhere.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 PIPELINE -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">03 — THE SOLUTION</div>
+      <h2>The <span class="grad">workflow</span> we built</h2>
+      <p class="lead">A reproducible pipeline: the paper's mathematics is executed in Wolfram, cross‑checked in Qiskit at machine precision, and handed off through vendor‑neutral OpenQASM.</p>
+      <div class="flow" style="margin-top:20px">
+        <div class="frow">
+          <div class="node"><div class="t">📄 Paper</div><div class="d">QSP / QSVT theory</div></div>
+          <div class="arrow">→</div>
+          <div class="node hl"><div class="t">∑ Mathematica</div><div class="d">symbolic derivation (.wl/.wls)</div></div>
+          <div class="arrow">→</div>
+          <div class="node hl"><div class="t">✓ Verify</div><div class="d">identities to ~10⁻¹⁶</div></div>
+          <div class="arrow">→</div>
+          <div class="node hl"><div class="t">∠ Phase angles</div><div class="d">FindQSPPhases</div></div>
+        </div>
+        <div class="frow">
+          <div class="node vio"><div class="t">⟨ OpenQASM ⟩</div><div class="d">portable QASM 2 &amp; 3</div></div>
+          <div class="arrow">→</div>
+          <div class="node vio"><div class="t">⚛ Qiskit + Aer</div><div class="d">circuits · sim · resources</div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="t">◎ Classiq</div><div class="d">synthesis hand‑off (next)</div></div>
+          <div class="arrow">→</div>
+          <div class="node"><div class="t">🖥 Hardware</div><div class="d">IBM / IonQ / …</div></div>
+        </div>
+      </div>
+      <div class="grid g3" style="margin-top:22px">
+        <div class="panel"><div class="stat"><span class="v">35 / 35</span><span class="l">proof‑audit checks passed</span></div></div>
+        <div class="panel"><div class="stat"><span class="v">6.1×10⁻¹⁶</span><span class="l">Wolfram ↔ Qiskit unitary agreement</span></div></div>
+        <div class="panel"><div class="stat"><span class="v">0.99999994</span><span class="l">e⁻ⁱᴴᵗ reconstruction overlap</span></div></div>
+      </div>
+      <div class="logostrip" style="margin-top:20px" aria-label="Toolchain">
+        <span class="lbl">Toolchain</span>
+        <a href="https://www.wolfram.com/mathematica/" target="_blank" rel="noopener" title="Wolfram Mathematica"><img class="ml" src="assets/mathematica-star.png" alt="Wolfram Mathematica" /></a>
+        <span class="dot">·</span>
+        <a href="https://ampcode.com/" target="_blank" rel="noopener" title="Amp — Mathematica skill"><img class="al" src="assets/amp-logo.svg" alt="Amp" /></a>
+        <span class="dot">·</span>
+        <a class="qmark" href="https://openqasm.com/" target="_blank" rel="noopener" title="OpenQASM">OpenQASM</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 TOOLING -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">04 — THE TOOLCHAIN</div>
+      <h2>Optimal Mathematica, <span class="grad">driven by Amp</span></h2>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="panel">
+          <div class="toolhead"><a href="https://www.wolfram.com/mathematica/" target="_blank" rel="noopener" title="Wolfram Mathematica"><img class="ml" src="assets/mathematica-star.png" alt="Wolfram Mathematica" /></a><h3 class="accent">Wolfram Quantum Framework</h3></div>
+          <p>The paclet from <a href="https://resources.wolframcloud.com/PacletRepository/resources/Wolfram/QuantumFramework/" target="_blank" rel="noopener" style="color:var(--cyan)">resources.wolframcloud.com</a> provides the quantum objects. Its <strong>SecondQuantization</strong> functionality — not a separate paclet — supplies the creation/annihilation operators used to build the Hamiltonian.</p>
+          <div class="formula">a = AnnihilationOperator[n]
+n̂ = a<sup>†</sup> a &nbsp;<span class="c">(* number operator *)</span>
+H = ω n̂ + g (a + a<sup>†</sup>) , &nbsp;‖H‖ ≤ 1</div>
+        </div>
+        <div class="panel vio">
+          <div class="toolhead"><a href="https://ampcode.com/" target="_blank" rel="noopener" title="Amp"><img class="al" src="assets/amp-logo.svg" alt="Amp" /></a><h3 class="pink">Headless .wl / .wls scripts</h3></div>
+          <p>The whole pipeline runs from the command line — no notebook GUI needed — so it is <strong>reproducible, scriptable and git‑friendly</strong>. Amp's Mathematica skill orchestrates it:</p>
+          <div class="code"><span class="c"># Amp-driven, three headless stages</span>
+wolframscript -file <span class="s">build_project.wls</span>   <span class="c"># derive+verify+phases</span>
+python <span class="s">qiskit_pipeline.py</span>              <span class="c"># circuits+QASM+sim</span>
+wolframscript -file <span class="s">proof_audit.wls</span>     <span class="c"># 35 checks</span></div>
+          <p style="margin-top:12px;font-size:.88rem">An evaluated companion notebook, <code class="accent">QSPUnification.nb</code>, is generated for interactive exploration.</p>
+        </div>
+      </div>
+      <div class="chips" style="margin-top:20px">
+        <div class="chip">Wolfram Language <b>14.3</b></div>
+        <div class="chip">QuantumFramework <b>1.6.5</b></div>
+        <div class="chip">qiskit <b>2.5</b> · aer</div>
+        <div class="chip">resources.wolframcloud.com</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 QSP CORE -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">05 — THE MATHEMATICS</div>
+      <h2>Quantum Signal Processing <span class="grad">in one screen</span></h2>
+      <p class="lead">A single qubit, interleaving a fixed <em>signal</em> rotation with tunable <em>phase</em> rotations, realises a polynomial in the signal <span class="mono">a = cos θ</span>.</p>
+      <div class="grid g2" style="margin-top:16px">
+        <div class="panel">
+          <h3 class="accent">Signal &amp; phase operators (Wx convention)</h3>
+          <div class="formula">W(a) = e<sup>i·arccos(a)·X</sup>
+&nbsp;&nbsp;&nbsp;&nbsp; = [ a &nbsp; i√(1−a²) ]
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; [ i√(1−a²) &nbsp; a ]
+
+S(φ) = e<sup>i·φ·Z</sup></div>
+        </div>
+        <div class="panel vio">
+          <h3 class="pink">The QSP sequence &amp; its response</h3>
+          <div class="formula">U<sub>Φ</sub>(a) = S(φ₀) ∏<sub>k=1..d</sub> W(a) S(φ<sub>k</sub>)
+
+P(a) = ⟨0| U<sub>Φ</sub>(a) |0⟩</div>
+          <p style="margin-top:10px"><span class="accent">d</span> signal calls · <span class="accent">d+1</span> phases. Choosing the phases shapes <strong>Re P(a)</strong> into any target polynomial of degree ≤ d and matching parity.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 CHEBYSHEV -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">06 — DERIVATION</div>
+      <h2>QSP <span class="grad">⇒ Chebyshev</span> polynomials</h2>
+      <div class="grid g-img" style="margin-top:14px">
+        <div class="imgcard">
+          <img src="exports/chebyshev_qsp.png" alt="Chebyshev polynomials T_d vs zero-phase QSP response" loading="lazy" />
+          <div class="cap">Wolfram output — T₁…T₅ (lines) vs the zero‑phase QSP response for d=5 (red dots). The dots sit exactly on T₅.</div>
+        </div>
+        <div>
+          <p>Set every phase to zero and QSP collapses to the <strong>Chebyshev polynomials</strong> — derived <span class="accent">symbolically</span>, not fitted:</p>
+          <div class="formula">φ = 0 &nbsp;⟹&nbsp; P(a) = T<sub>d</sub>(a),&nbsp; Q(a) = U<sub>d−1</sub>(a)</div>
+          <p>and they obey the Pell / Chebyshev identity exactly:</p>
+          <div class="formula">T<sub>d</sub>(a)² + (1 − a²) · U<sub>d−1</sub>(a)² = 1</div>
+          <ul class="feat" style="margin-top:8px">
+            <li>Proven symbolically for <strong>d = 1…8</strong></li>
+            <li>Parity: T<sub>d</sub>(−a) = (−1)<sup>d</sup> T<sub>d</sub>(a)</li>
+            <li>Numeric match: max error <span class="num">7.8×10⁻¹⁶</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 VERIFICATION -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">07 — VERIFICATION</div>
+      <h2>Every identity, <span class="grad">checked numerically</span></h2>
+      <p class="lead">Nothing is asserted without a test. Symbolic truth is confirmed numerically, then re‑confirmed against an independent tool.</p>
+      <div class="twrap panel" style="margin-top:16px">
+        <table>
+          <thead><tr><th>Check</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>Chebyshev symbolic derivation (d = 1…6)</td><td class="ok">all pass</td></tr>
+            <tr><td>Zero‑phase QSP vs T<sub>d</sub>, max error</td><td class="num">7.77×10⁻¹⁶</td></tr>
+            <tr><td>QSP unitarity&nbsp; |P|²+(1−a²)|Q|² = 1</td><td class="num">8.88×10⁻¹⁶</td></tr>
+            <tr><td>Jacobi–Anger cos truncation error</td><td class="num">2.15×10⁻¹¹</td></tr>
+            <tr><td>Jacobi–Anger sin truncation error</td><td class="num">1.42×10⁻¹²</td></tr>
+            <tr><td>Phase generation — cos target</td><td class="num">2.79×10⁻⁷</td></tr>
+            <tr><td>Phase generation — sin target</td><td class="num">6.60×10⁻⁸</td></tr>
+            <tr><td>e<sup>−iHt</sup> reconstruction max error</td><td class="num">1.34×10⁻⁷</td></tr>
+            <tr><td><strong>Wolfram ↔ Qiskit</strong> unitary agreement (19 checkpoints)</td><td class="num">6.12×10⁻¹⁶</td></tr>
+            <tr><td>Proof audit</td><td class="ok">35 passed · 0 failed</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 JACOBI ANGER / HAMILTONIAN -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">08 — HAMILTONIAN SIMULATION</div>
+      <h2>From <span class="grad">cos &amp; sin</span> to e<sup>−iHt</sup></h2>
+      <div class="grid g-img" style="margin-top:14px">
+        <div>
+          <p>Time evolution needs QSP to approximate trigonometric functions. The <strong>Jacobi–Anger</strong> expansion supplies polynomials whose coefficients are <strong>Bessel functions</strong>:</p>
+          <div class="formula">cos(t·a) = J₀(t) + 2 Σ<sub>k≥1</sub> (−1)<sup>k</sup> J<sub>2k</sub>(t) T<sub>2k</sub>(a)</div>
+          <p>The Hamiltonian is built from <span class="vio">SecondQuantization</span> operators (a driven, truncated‑Fock oscillator), normalised so ‖H‖ ≤ 1, then diagonalised:</p>
+          <div class="formula">eig(H) = { −0.706, −0.311, 0.167, 0.850 }</div>
+        </div>
+        <div class="imgcard">
+          <img src="exports/cos_qsp.png" alt="Degree-12 QSP response vs (1-eta) cos(t a) target" loading="lazy" />
+          <div class="cap">Wolfram output — a degree‑12 QSP polynomial (red dots) reproduces the scaled cosine target (1−η)·cos(t·a) across [−1, 1].</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 EIGENVALUE + RECONSTRUCTION -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">09 — RESULT</div>
+      <h2>Eigenvalue transform &amp; <span class="grad">reconstruction</span></h2>
+      <div class="grid g2" style="margin-top:14px">
+        <div class="imgcard">
+          <img src="exports/eigenvalue_transform.png" alt="Eigenvalue transform with markers at H eigenvalues" loading="lazy" />
+          <div class="cap">Targets (1−η)cos(t·a) and (1−η)sin(t·a); markers land on the four eigenvalues of H — QSVT transforms each eigenvalue independently.</div>
+        </div>
+        <div class="imgcard">
+          <img src="exports/reconstruction.png" alt="Absolute error heatmap: QSP reconstruction vs exact e^{-iHt}" loading="lazy" />
+          <div class="cap">|QSP reconstruction − exact e<sup>−iHt</sup>| as a 4×4 error heat‑map. Largest element ≈ 10⁻⁷.</div>
+        </div>
+      </div>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="panel"><div class="stat"><span class="v">1.34×10⁻⁷</span><span class="l">max |reconstructed − exact e⁻ⁱᴴᵗ|</span></div></div>
+        <div class="panel vio"><div class="stat"><span class="v">0.99999994</span><span class="l">normalized overlap with exact evolution</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 CIRCUIT -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">10 — THE CIRCUIT</div>
+      <h2>Phases <span class="grad">become gates</span></h2>
+      <div class="grid g-img" style="margin-top:14px">
+        <div class="imgcard">
+          <img src="exports/figures/demo1_chebyshev_d5_a0.6_circuit.png" alt="Qiskit single-qubit QSP circuit, degree 5" loading="lazy" />
+          <div class="cap">Qiskit — the degree‑5 QSP circuit: 6 R<sub>Z</sub> phase gates alternating with 5 R<sub>X</sub> signal gates on one qubit.</div>
+        </div>
+        <div>
+          <p>The QSP operators map directly onto standard rotation gates, so the abstract sequence becomes an executable circuit:</p>
+          <div class="formula">W(a) &nbsp;↔&nbsp; R<sub>X</sub>(−2·arccos a)
+S(φ) &nbsp;↔&nbsp; R<sub>Z</sub>(−2·φ)</div>
+          <ul class="feat" style="margin-top:8px">
+            <li>Degree‑5 → 6 × R<sub>Z</sub> + 5 × R<sub>X</sub>, depth 11</li>
+            <li>Showcase: <span class="mono">⟨0|U|0⟩ = −0.075840</span> = T₅(0.6)</li>
+            <li>|abs error| vs Wolfram: <span class="num">1.7×10⁻¹⁶</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 11 OPENQASM -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">11 — INTEROPERABILITY</div>
+      <h2>OpenQASM — <span class="grad">the portable boundary</span></h2>
+      <div class="qasm-banner" style="margin-top:14px">
+        <a href="https://openqasm.com/" target="_blank" rel="noopener"><img src="assets/openqasm-theme.jpg" alt="OpenQASM — Open Quantum Assembly language" loading="lazy" /></a>
+        <span class="bl">Open Quantum Assembly · IBM · vendor‑neutral</span>
+      </div>
+      <div class="grid g-img" style="margin-top:16px">
+        <div>
+          <h3 class="accent">What it is</h3>
+          <p><strong>OpenQASM</strong> (Open Quantum Assembly) is an open, text‑based language for describing quantum circuits — an assembly language for qubits. Introduced by IBM; <strong>OpenQASM 3</strong> adds classical control.</p>
+          <h3 class="accent" style="margin-top:18px">Why we use it</h3>
+          <ul class="feat">
+            <li><strong>Vendor‑neutral:</strong> one circuit runs on IBM, simulators, and translates to IonQ, Quantinuum, Rigetti.</li>
+            <li><strong>Decouples</strong> the mathematics (Wolfram) from any single SDK.</li>
+            <li>The <strong>clean hand‑off</strong> to synthesis tools like Classiq and to real hardware.</li>
+          </ul>
+        </div>
+        <div>
+          <div class="code"><span class="c">// demo1_chebyshev_d5_a0.6.qasm3</span>
+<span class="k">OPENQASM</span> 3.0;
+<span class="k">include</span> <span class="s">"stdgates.inc"</span>;
+<span class="k">qubit</span>[1] q;
+rz(<span class="n">0</span>) q[0];
+rx(<span class="n">-1.8545904</span>) q[0];
+rz(<span class="n">0</span>) q[0];
+rx(<span class="n">-1.8545904</span>) q[0];
+<span class="c">// … ×5 signal calls …</span>
+rz(<span class="n">0</span>) q[0];</div>
+          <div class="cap">Exported in both OpenQASM 2 &amp; 3. rx = −2·arccos(0.6) = −1.8546.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 RESOURCES -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">12 — RESOURCE ESTIMATION</div>
+      <h2>What will it <span class="grad">cost to run?</span></h2>
+      <p class="lead">Signal calls = polynomial degree = queries to the block‑encoding of H — and they dominate cost. The pipeline emits gate counts, depth and a scaling table.</p>
+      <div class="grid g-img" style="margin-top:16px">
+        <div class="twrap panel">
+          <table>
+            <thead><tr><th>degree</th><th>signal calls</th><th>R<sub>z</sub></th><th>R<sub>x</sub></th><th>depth</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>1</td><td>2</td><td>1</td><td>3</td></tr>
+              <tr><td>5</td><td>5</td><td>6</td><td>5</td><td>11</td></tr>
+              <tr><td>8</td><td>8</td><td>9</td><td>8</td><td>17</td></tr>
+              <tr><td>12</td><td>12</td><td>13</td><td>12</td><td>25</td></tr>
+              <tr><td>13</td><td>13</td><td>14</td><td>13</td><td>27</td></tr>
+            </tbody>
+          </table>
+          <div class="cap" style="padding:0 12px 12px">depth = 2d + 1 · IBM basis (rz, sx) compiles each block to depth 5 · opt‑3 → single U gate.</div>
+        </div>
+        <div class="panel vio">
+          <h3 class="pink">The frontier the paper sets</h3>
+          <p>For Hamiltonian simulation, the optimal query complexity is:</p>
+          <div class="formula">Θ( |t| + log(1/ε) / log log(1/ε) )</div>
+          <p style="margin-top:8px">This is what lets a hardware vendor answer: <em>“given my gate budget and error rate, how large a t and how small an ε can I actually reach?”</em></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 ECOSYSTEM -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">13 — THE COMMERCIAL ECOSYSTEM</div>
+      <h2>Where this <span class="grad">creates value</span></h2>
+      <p class="lead">The ecosystem‑layer view matters most for this paper — the same primitive is consumed differently at each layer.</p>
+      <div class="grid g3" style="margin-top:18px">
+        <div class="panel">
+          <div class="eco"><div class="ic">🖥</div><div><h3 class="accent">Hardware vendors</h3></div></div>
+          <p style="margin-top:10px">Need <strong>resource estimates from QSVT</strong> to decide which problems their current and roadmap machines can reach — a benchmarking &amp; roadmap tool.</p>
+          <div class="vendors"><span>IBM</span><span>Quantinuum</span><span>IonQ</span><span>Rigetti</span><span>PsiQuantum</span><span>Google</span></div>
+        </div>
+        <div class="panel vio">
+          <div class="eco"><div class="ic">◎</div><div><h3 class="pink">Software / middleware</h3></div></div>
+          <p style="margin-top:10px">Turn <em>“give me a polynomial approximation of f”</em> into <em>“here is an optimized circuit.”</em> <strong>Phase‑angle generation &amp; synthesis is a direct product surface.</strong></p>
+          <div class="vendors"><span>Classiq</span><span>Q‑CTRL</span><span>Qiskit</span><span>PennyLane</span></div>
+        </div>
+        <div class="panel">
+          <div class="eco"><div class="ic">☁</div><div><h3 class="amb">End‑user verticals</h3></div></div>
+          <p style="margin-top:10px">Consume it <strong>via cloud, without touching the math</strong> — chemistry, finance, materials and ML teams call a service.</p>
+          <div class="vendors"><span>Pharma</span><span>Finance</span><span>Materials</span><span>Logistics</span></div>
+        </div>
+      </div>
+      <p style="margin-top:20px;text-align:center;font-size:.95rem">Our pipeline is the <span class="accent">QA &amp; costing backbone</span> each of these layers depends on: symbolic truth → machine‑precision cross‑check → portable QASM → resource scaling.</p>
+    </div>
+  </section>
+
+  <!-- 14 CODE · WOLFRAM LANGUAGE (QSP core) -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">14 — CODE REFERENCE · WOLFRAM LANGUAGE</div>
+      <h2>The QSP core, <span class="grad">as written</span></h2>
+      <p class="lead" style="margin-bottom:14px">Straight from <code class="accent">src/QSPUnification.wl</code> — the signal/phase operators, the QSP sequence, and the symbolic Chebyshev proof.</p>
+      <div class="code"><span class="c">(* QSP signal &amp; phase operators — Wx convention *)</span>
+QSPSignalOperator[a_] := With[{th = ArcCos[a]},
+  {{Cos[th], I Sin[th]}, {I Sin[th], Cos[th]}}];
+
+QSPPhaseOperator[phi_] := {{Exp[I phi], 0}, {0, Exp[-I phi]}};
+
+<span class="c">(* U = S(phi0) . Prod_k W(a).S(phi_k) *)</span>
+QSPUnitary[phases_List, a_] := Module[{d, w, u},
+  d = Length[phases] - 1;
+  w = QSPSignalOperator[a];
+  u = QSPPhaseOperator[phases[[1]]];
+  Do[u = u . w . QSPPhaseOperator[phases[[k + 1]]], {k, 1, d}];
+  u];
+
+QSPPolynomial[phases_, a_] := QSPUnitary[phases, a][[1, 1]];
+
+<span class="c">(* zero phases  ->  P(a) = T_d(a) : proven symbolically *)</span>
+ChebyshevDerivation[d_] := Module[{th, wpow, p11},
+  wpow = MatrixPower[QSPSignalOperator[Cos[th]], d];
+  p11  = FullSimplify[wpow[[1, 1]]];
+  FullSimplify[p11 - ChebyshevT[d, Cos[th]]] === 0];</div>
+    </div>
+  </section>
+
+  <!-- 15 CODE · WOLFRAM LANGUAGE (2nd quantization + phases) -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">15 — CODE REFERENCE · WOLFRAM LANGUAGE</div>
+      <h2>Second quantization &amp; <span class="grad">phase generation</span></h2>
+      <p class="lead" style="margin-bottom:14px">The Hamiltonian is built from the Quantum Framework's ladder operators; Jacobi–Anger sets the target; <code class="accent">FindQSPPhases</code> solves for the angles.</p>
+      <div class="code"><span class="c">(* second quantization — Wolfram Quantum Framework *)</span>
+Needs[<span class="s">"Wolfram`QuantumFramework`"</span>];
+annFn = PacletSymbol[<span class="s">"Wolfram/QuantumFramework"</span>,
+                     <span class="s">"AnnihilationOperator"</span>];
+a    = annFn[size, {1}];             <span class="c">(* annihilation op *)</span>
+aMat = Normal[a["Matrix"]];
+aDag = ConjugateTranspose[aMat];     <span class="c">(* creation  a^dag *)</span>
+n    = aDag . aMat;                  <span class="c">(* number  n = a^dag a *)</span>
+H    = omega n + g (aMat + aDag);    <span class="c">(* driven oscillator *)</span>
+H    = H / (Max[Abs[Eigenvalues[H]]] / 0.85);   <span class="c">(* norm ≤ 1 *)</span>
+
+<span class="c">(* Jacobi–Anger: cos(t x) via Bessel coefficients *)</span>
+JacobiAngerCos[t_, K_] := BesselJ[0, t] +
+  Sum[2 (-1)^k BesselJ[2 k, t] ChebyshevT[2 k, x], {k, 1, K}];
+
+<span class="c">(* symmetric QSP phases so Re P(a) ≈ target *)</span>
+cosPh = FindQSPPhases[Function[x, (1 - eta) Cos[t x]],
+                      12, <span class="s">"Restarts"</span> -> 6];</div>
+    </div>
+  </section>
+
+  <!-- 16 CODE · OPENQASM -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">16 — CODE REFERENCE · OPENQASM</div>
+      <h2>Exported <span class="grad">OpenQASM 3</span> circuits</h2>
+      <p class="lead" style="margin-bottom:14px">Vendor‑neutral output — every phase angle becomes an <code class="accent">rz</code>, every signal call an <code class="accent">rx</code>. Full files live in <code class="accent">exports/qasm/</code>.</p>
+      <div class="grid g2">
+        <div>
+          <div class="cap" style="margin:0 0 6px">Demo 1 — Chebyshev, degree 5</div>
+          <div class="code"><span class="c">// demo1_chebyshev_d5_a0.6.qasm3</span>
+OPENQASM 3.0;
+include <span class="s">"stdgates.inc"</span>;
+qubit[1] q;
+rz(0) q[0];
+rx(-1.8545904) q[0];  <span class="c">// W=RX(-2·arccos a)</span>
+rz(0) q[0];
+rx(-1.8545904) q[0];
+<span class="c">// … 5 signal calls total …</span>
+rz(0) q[0];</div>
+        </div>
+        <div>
+          <div class="cap" style="margin:0 0 6px">Demo 2 — cos(t·a), degree 12</div>
+          <div class="code"><span class="c">// demo2_cos_d12_eig0.8500.qasm3</span>
+OPENQASM 3.0;
+qubit[1] q;
+rz(-1.5707961) q[0];  <span class="c">// S=RZ(-2·phi)</span>
+rx(-1.1096221) q[0];
+rz(-1.31e-06) q[0];
+rx(-1.1096221) q[0];
+rz(7.85e-05) q[0];
+rx(-1.1096221) q[0];
+<span class="c">// … 12 calls, symmetric …</span>
+rz(-1.5707961) q[0];</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 CLOSE -->
+  <section class="slide">
+    <div class="wrap">
+      <div class="sec-no">17 — SUMMARY</div>
+      <h2><span class="grad">Paper → verified circuits</span>, end to end</h2>
+      <div class="grid g3" style="margin-top:18px">
+        <div class="panel"><div class="stat"><span class="v">35/35</span><span class="l">proof‑audit checks</span></div></div>
+        <div class="panel"><div class="stat"><span class="v">6.1×10⁻¹⁶</span><span class="l">Wolfram ↔ Qiskit</span></div></div>
+        <div class="panel"><div class="stat"><span class="v">0.99999994</span><span class="l">e⁻ⁱᴴᵗ overlap</span></div></div>
+      </div>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="panel">
+          <h3 class="accent">Deliverables</h3>
+          <ul class="feat" style="margin-top:10px">
+            <li>Symbolic derivation &amp; numerical verification</li>
+            <li>Gate circuits + OpenQASM 2 &amp; 3</li>
+            <li>Circuit &amp; Wolfram visualizations</li>
+            <li>Resource estimation + scaling table</li>
+            <li>Interactive notebook <code class="accent">QSPUnification.nb</code></li>
+          </ul>
+        </div>
+        <div class="panel vio">
+          <h3 class="pink">Built with</h3>
+          <div class="logostrip" style="margin:14px 0 4px" aria-label="Toolchain">
+            <a href="https://www.wolfram.com/mathematica/" target="_blank" rel="noopener" title="Wolfram Mathematica"><img class="ml" src="assets/mathematica-star.png" alt="Wolfram Mathematica" /></a>
+            <span class="dot">·</span>
+            <a href="https://ampcode.com/" target="_blank" rel="noopener" title="Amp — Mathematica skill"><img class="al" src="assets/amp-logo.svg" alt="Amp" /></a>
+            <span class="dot">·</span>
+            <a class="qmark" href="https://openqasm.com/" target="_blank" rel="noopener" title="OpenQASM">OpenQASM</a>
+          </div>
+          <div class="chips" style="margin-top:6px">
+            <div class="chip"><b>Wolfram Mathematica</b> 14.3</div>
+            <div class="chip">Wolfram Quantum Framework</div>
+            <div class="chip">Amp — Mathematica skill</div>
+            <div class="chip">Qiskit + Aer</div>
+          </div>
+          <p style="margin-top:16px;font-family:var(--mono);font-size:.82rem;color:var(--muted)">Repository</p>
+          <p class="mono accent" style="font-size:.9rem;word-break:break-all">github.com/zuwasi/qsp‑qsvt‑unification‑pipeline</p>
+        </div>
+      </div>
+      <p style="margin-top:22px;text-align:center;color:var(--dim);font-family:var(--mono);font-size:.8rem">Quantum Signal Processing · Chebyshev · Hamiltonian Simulation · OpenQASM</p>
+    </div>
+  </section>
+
+  <!-- 18 THANK YOU -->
+  <section class="slide close">
+    <div class="wrap">
+      <div class="logo-card"><img src="assets/esl_logo.png" alt="ESL — Engineering Software Lab" /></div>
+      <div class="sec-no" style="margin:0">18 — THANK YOU</div>
+      <h1>Thank you<br><span class="grad">for watching</span></h1>
+      <p class="lead">The complete project — <strong>code &amp; documentation</strong> — is available to the public under the <strong class="accent">MIT License</strong> in this repository:</p>
+      <a class="repo-link" href="https://github.com/zuwasi/qsp-qsvt-unification-pipeline" target="_blank" rel="noopener">github.com/zuwasi/qsp-qsvt-unification-pipeline →</a>
+      <p class="lead" style="font-size:clamp(.92rem,1.7vw,1.1rem)">Feel free to <strong>use, modify, improve</strong>, give feedback, and submit <strong class="accent">Pull Requests</strong>.</p>
+      <div class="credit author-card" style="max-width:360px;margin-top:4px">
+        <img class="avatar" src="assets/daniel.jpg" alt="Daniel Liezrowice" />
+        <div style="text-align:left;min-width:0">
+          <div class="lbl">Author</div>
+          <h3>Daniel Liezrowice</h3>
+          <a href="https://www.linkedin.com/in/liezrowice/" target="_blank" rel="noopener">LinkedIn →</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="nav prev hide" id="prev">‹</div>
+<div class="nav next" id="next">›</div>
+<div class="progress"><div class="fill" id="fill"></div></div>
+<div class="counter"><b id="cur">1</b> / <span id="tot">18</span></div>
+<div class="brandline">Wolfram × Amp × Qiskit</div>
+
+<script>
+(function(){
+  var deck=document.getElementById('deck');
+  var slides=deck.children;
+  var total=slides.length;
+  var i=0;
+  var prev=document.getElementById('prev'), next=document.getElementById('next');
+  var fill=document.getElementById('fill'), cur=document.getElementById('cur'), tot=document.getElementById('tot');
+  var hint=document.getElementById('hint');
+  tot.textContent=total;
+
+  function render(){
+    deck.style.transform='translateX('+(-i*100)+'vw)';
+    fill.style.width=((i)/(total-1)*100)+'%';
+    cur.textContent=i+1;
+    prev.classList.toggle('hide', i===0);
+    next.classList.toggle('hide', i===total-1);
+  }
+  function go(n){
+    i=Math.max(0,Math.min(total-1,n));
+    if(i>0 && hint){hint.classList.add('gone');}
+    render();
+  }
+  next.addEventListener('click',function(){go(i+1)});
+  prev.addEventListener('click',function(){go(i-1)});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();go(i+1);}
+    else if(e.key==='ArrowLeft'){e.preventDefault();go(i-1);}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(total-1);}
+  });
+
+  // touch swipe
+  var tsx=0,tsy=0;
+  document.addEventListener('touchstart',function(e){tsx=e.changedTouches[0].clientX;tsy=e.changedTouches[0].clientY;},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-tsx, dy=e.changedTouches[0].clientY-tsy;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)){ go(dx<0?i+1:i-1); }
+  },{passive:true});
+
+  // mouse drag (desktop swipe)
+  var mdx=0,down=false;
+  deck.addEventListener('mousedown',function(e){down=true;mdx=e.clientX;});
+  window.addEventListener('mouseup',function(e){
+    if(!down)return; down=false;
+    var dx=e.clientX-mdx;
+    if(Math.abs(dx)>60){ go(dx<0?i+1:i-1); }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
